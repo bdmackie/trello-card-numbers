@@ -1,4 +1,4 @@
-var LIGHTBOX_SELECTOR = 'window-title';
+var CARD_DIALOG_CLASS = 'window-title';
 var CARD_LINK_QUERY_SELECTOR = 'span.list-card-title.js-card-name';
 var LIST_NUM_CARDS_CLASS = 'list-header-num-cards';
 var CARD_SHORT_ID = 'card-short-id';
@@ -139,49 +139,40 @@ function getCardNumberFromUrl(url) {
     return num;
 }
 
-function addNumberToLightboxWhenReady(cardNumber) {
+function modifyCardDialogWhenReady(cardNumber) {
     poll(
-        function() { return $('.' + LIGHTBOX_SELECTOR).length > 0; },
+        function() { return $('.' + CARD_DIALOG_CLASS).length > 0; },
         4000,
         100
     ).then(function() {
-        // if/else needed to handle multiple promises
-        var header = getByClass(TCN_HEADER);
-        if (header.length > 0) {
-            header.innerHTML = cardNumber;
-        } else {
-            var obj = getByClass(LIGHTBOX_SELECTOR)[0];
-            var h2 = document.createElement('h2');
-            h2.className = TCN_HEADER + ' quiet';
-            h2.style.display = 'inline-block';
-            h2.style.marginRight = '10px';
-            h2.innerHTML = '<span>' + cardNumber + '</span>';
-            obj.insertBefore(h2, obj.lastChild);
-
-            chrome.storage.sync.get(function(items) {
-                if (items.showCopy == true) {
-                    var copyButton = getByClass("button-link js-copy-card")[0];
-
-                    var copyDetailsButton = document.createElement('a');
-                    copyDetailsButton.className = 'button-link';
-                    copyDetailsButton.href = '#';
-                    copyDetailsButton.onclick = function() {
-                        var cardText = getByClass('js-card-detail-title-input')[0].value;
-
-                        // Ew....
-                        // Source http://stackoverflow.com/a/18455088
-                        var copyFrom = document.createElement("textarea");
-                        copyFrom.textContent = cardNumber.trim() + ", " + cardText; // Unsure if its ok to refer to cardNumber from params.
-                        document.body.appendChild(copyFrom);
-                        copyFrom.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(copyFrom);
-                    };
-                    copyDetailsButton.innerHTML = '<span class="icon-sm icon-card"></span>&nbsp;Copy details</a>';
-                    copyButton.parentNode.insertBefore(copyDetailsButton, copyButton.nextSibling);
-                }
-            });
+        // Check for existing header.
+        var $header = $('.' + TCN_HEADER);
+        if ($header.length > 0) {
+            $header.html(cardNumber);
+            return;
         }
+
+        // Insert header.
+        var obj = $('.' + CARD_DIALOG_CLASS).first();
+        var newHtml = 
+            '<h2 class="' + TCN_HEADER + ' quiet" style="display:inline-block; margin-right:10px;"' + 
+            '<span>' + cardNumber + '</span>' +
+            '</h2>';
+        $(obj).children().last().before(newHtml);
+
+        // Create copy details button.
+        chrome.storage.sync.get(function(items) {
+            if (!items.showCopy)
+                return;
+            var $copyButton = $('.button-link.js-copy-card').first();
+            var $copyDetailsButton = $('<a class="button-link" href="#">' +
+                '<span class="icon-sm icon-card"></span>&nbsp;Copy details</a>');
+            $copyDetailsButton.on('click', function() {
+                var cardText = $('.js-card-detail-title-input').first().val();
+                copyTextToClipboard(cardNumber.trim() + ", " + cardText);
+            });
+            $copyButton.after($copyDetailsButton);
+        });
     }).catch(function(err) {
         console.error(err);
     });
@@ -253,7 +244,7 @@ window.addEventListener('load', function() {
             var cardId = listCard.querySelectorAll(CARD_SHORT_ID_SELECTOR)[0];
             if (cardId) {
                 id = cardId.innerHTML;
-                addNumberToLightboxWhenReady(id);
+                modifyCardDialogWhenReady(id);
             }
         }
     }, true);
@@ -262,6 +253,6 @@ window.addEventListener('load', function() {
     var pageUrl = document.location.href;
     if (urlMatch(CARD_URL_REGEX, pageUrl)) {
         var num = '#' + getCardNumberFromUrl(pageUrl);
-        addNumberToLightboxWhenReady(num);
+        modifyCardDialogWhenReady(num);
     }
 }, false);
