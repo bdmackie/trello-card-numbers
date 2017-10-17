@@ -10,98 +10,12 @@ var TCN_INLINE_BLOCK = 'trello-card-numbers-inline-block';
 var BOARD_URL_REGEX = /trello\.com\/b\//;
 var CARD_URL_REGEX = /trello\.com\/c\//;
 
-// check that url has been added to card after it is created
-// this is done asynchronously a few ms later
-function hrefReady(obj) {
-    var promise = new Promise(function(resolve,reject) {
-        var inc = 40;
-        var hrefListener = function(interval) {
-            if (obj.getAttribute('href') != undefined) {
-                resolve(obj.getAttribute('href'));
-            } else {
-                interval = interval + 1 || 1;
-                if (interval < inc) {
-                    setTimeout(function() { hrefListener(interval); }, 100);
-                } else {
-                    reject('Href timeout error');
-                }
-            }
-        };
-        hrefListener();
-    });
-
-    return promise;
-}
-
-function addClassToArray(arr,klass) {
-    var len = arr.length
-    for (var i=0; i < len; i++) {
-        var obj = arr[i];
-        if (!hasClass(obj, klass)) {
-            obj.className = obj.className + ' ' + klass;
-        }
-    };
-}
-
-function addStyleToArray(arr,attribute,style) {
-    var len = arr.length;
-    for (var i=0; i < len; i++) {
-        var obj = arr[i];
-        obj.style[attribute] = style;
-    }
-}
-
-function boldifyCardids() {
-    arr = getByClass('trello-card-numbers-inline');
-    var len = arr.length;
-    for (var i=0; i < len; i++) {
-        var obj = arr[i];
-        obj.style.fontWeight = 'bold';
-    }
-}
-
-function addClassWithDisplay(selector, newClass, display, callback) {
-    return function() {
-        var objects = getByClass(selector);
-        addClassToArray(objects, newClass);
-        objects = getByClass(newClass);
-        addStyleToArray(objects, 'display', display);
-        chrome.storage.sync.get(function(items) {
-            if (selector == CARD_SHORT_ID) {
-                if (items.boldId) {
-                    addStyleToArray(objects, 'fontWeight', 'bold');
-                }
-                if (items.idColor) {
-                    addStyleToArray(objects, 'color', '#' + items.idColor);
-                }
-            }
-        });
-        if (callback) {
-            callback(selector);
-        }
-    };
-}
-
-function addTrailingSpace(selector) {
-    var objects = getByClass(selector);
-    var len = objects.length
-    for (var i=0; i < len; i++) {
-        var obj = objects[i];
-        obj.innerHTML = obj.innerHTML + ' ';
-    };
-}
-
-
 function hasClass(target, className) {
     className = ' ' + className + ' ';
     if (target.className) {
         return (' ' + target.className + ' ').replace(/[\n\t]/g, ' ').indexOf(className) > -1
     }
     return false;
-}
-
-function getByClass(name) {
-    return document.getElementsByClassName(name);
 }
 
 function getAncestorBySelector(elem, selector) {
@@ -184,10 +98,51 @@ function urlMatch(regex, url) {
     return matches != null && matches.length !== 0;
 }
 
+function showListNumbers() {
+    $('.' + LIST_NUM_CARDS_CLASS).addClassOnce(TCN_INLINE_BLOCK);
+
+    chrome.storage.sync.get(function(items) {
+        $('.' + TCN_INLINE_BLOCK).removeClass("hide").css("display", "inline-block");
+
+        // if (items.showPercent) {
+        //     // Get total cards.
+        //     var total = 0;
+        //     $('.' + TCN_INLINE_BLOCK).each(
+        //         function(index, element) { 
+        //             total += parseInt($(element).text(),10)
+        //         }
+        //     );
+            
+        //     // Add percent label.
+        //     $('.' + TCN_INLINE_BLOCK).each(        
+        //         function(index, element) {
+        //             var text = $(element).text();
+        //             if (text.indexOf("(") >= 0)
+        //                 text = text.substr(0, text.indexOf("("));            
+        //             text = text.trim() + " (" + (Math.round(parseInt(text,10)*100/total)) + "%)";
+        //             $(element).text(text);
+        //         }
+        //     )
+        // }
+    });
+}
+
+
+function showCardIds() {
+    //debugger;
+    $('.' + CARD_SHORT_ID).addClassOnce(TCN_INLINE);
+    chrome.storage.sync.get(function(items) {
+        $('.' + CARD_SHORT_ID).removeClass("hide");
+        if (items.boldId)
+            $('.' + TCN_INLINE).css("fontWeight", "bold");
+        if (items.idColor)
+            $('.' + TCN_INLINE).css("color", '#' + items.idColor);
+    });    
+    $('.' + TCN_INLINE).append(' ');
+}
+
 window.addEventListener('load', function() {
-    var showListNumbers = addClassWithDisplay(LIST_NUM_CARDS_CLASS, TCN_INLINE_BLOCK, 'inline-block', null);
     showListNumbers();
-    var showCardIds = addClassWithDisplay(CARD_SHORT_ID, TCN_INLINE, 'inline', addTrailingSpace);
     showCardIds();
 
     // show card numbers after card is inserted
