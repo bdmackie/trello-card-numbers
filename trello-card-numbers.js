@@ -10,26 +10,26 @@ var TCN_INLINE_BLOCK = 'trello-card-numbers-inline-block';
 var BOARD_URL_REGEX = /trello\.com\/b\//;
 var CARD_URL_REGEX = /trello\.com\/c\//;
 
+function closestWithClass(elem, className, stopAtName) {
+    var result = null;
+    $(elem).parent().each(function(index, item) {
+        if (stopAtName && item.name == stopAtName)
+            return false;
+        if ($(item).hasClass(className)) {
+            result = item;
+            return false;
+        }
+        return true;        
+    });
+    return result;
+}
+
 function hasClass(target, className) {
     className = ' ' + className + ' ';
     if (target.className) {
         return (' ' + target.className + ' ').replace(/[\n\t]/g, ' ').indexOf(className) > -1
     }
     return false;
-}
-
-function getAncestorBySelector(elem, selector) {
-    var node = elem;
-    while (node.tagName != 'BODY') {
-        if (hasClass(node, selector)) {
-            return node;
-        }
-        if (node.parentNode !== 'undefined') {
-            node = node.parentNode;
-        } else {
-            return null;
-        }
-    }
 }
 
 function getParentLink(elem) {
@@ -67,12 +67,12 @@ function modifyCardDialogWhenReady(cardNumber) {
         }
 
         // Insert header.
-        var obj = $('.' + CARD_DIALOG_CLASS).first();
+        var $obj = $('.' + CARD_DIALOG_CLASS).first();
         var newHtml = 
             '<h2 class="' + TCN_HEADER + ' quiet" style="display:inline-block; margin-right:10px;"' + 
             '<span>' + cardNumber + '</span>' +
             '</h2>';
-        $(obj).children().last().before(newHtml);
+        $obj.children().last().before(newHtml);
 
         // Create copy details button.
         chrome.storage.sync.get(function(items) {
@@ -194,7 +194,8 @@ window.addEventListener('load', function() {
             setTimeout(function() { showListNumbers(); showCardIds(); }, 1000);
         }
 
-        var listCard =  getAncestorBySelector(e.target, 'list-card-details') || getAncestorBySelector(e.target, SEARCH_RESULT_CARD);
+        var listCard =  closestWithClass(e.target, 'list-card-details', 'BODY') || 
+            closestWithClass(e.target, SEARCH_RESULT_CARD, 'BODY');
         if (listCard) {
             var cardId = listCard.querySelectorAll(CARD_SHORT_ID_SELECTOR)[0];
             if (cardId) {
