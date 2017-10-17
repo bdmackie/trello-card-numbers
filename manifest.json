@@ -23,7 +23,7 @@
     "content_scripts": [
       {
         "matches": ["https://trello.com/*"],
-        "js": ["trello-card-numbers.js"]
+        "js": ["zepto/zepto.min.js", "util.js", "trello-card-numbers.js"]
       }
     ]
 }

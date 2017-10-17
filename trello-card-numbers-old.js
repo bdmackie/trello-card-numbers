@@ -10,6 +10,30 @@ var TCN_INLINE_BLOCK = 'trello-card-numbers-inline-block';
 var BOARD_URL_REGEX = /trello\.com\/b\//;
 var CARD_URL_REGEX = /trello\.com\/c\//;
 
+// ensure lightbox is loaded before adding to it
+function lightboxReady() {
+    var promise = new Promise(function(resolve,reject) {
+        var inc = 40;
+        var lightboxListener = function(interval) {
+            var lightbox = document.getElementsByClassName(LIGHTBOX_SELECTOR);
+            if (lightbox.length != 0) {
+                resolve('true');
+            }
+            else {
+                interval = interval + 1 || 1;
+                if (interval < inc) {
+                    setTimeout(function() { lightboxListener(interval); }, 100);
+                } else {
+                    reject('Lightbox Timeout');
+                }
+            }
+        };
+        lightboxListener();
+    });
+
+    return promise;
+}
+
 // check that url has been added to card after it is created
 // this is done asynchronously a few ms later
 function hrefReady(obj) {
@@ -140,11 +164,7 @@ function getCardNumberFromUrl(url) {
 }
 
 function addNumberToLightboxWhenReady(cardNumber) {
-    poll(
-        function() { return $('.' + LIGHTBOX_SELECTOR).length > 0; },
-        4000,
-        100
-    ).then(function() {
+    lightboxReady().then(function() {
         // if/else needed to handle multiple promises
         var header = getByClass(TCN_HEADER);
         if (header.length > 0) {
@@ -182,8 +202,8 @@ function addNumberToLightboxWhenReady(cardNumber) {
                 }
             });
         }
-    }).catch(function(err) {
-        console.error(err);
+    }, function (err) {
+        null;
     });
 }
 
@@ -206,7 +226,6 @@ window.addEventListener('load', function() {
         mutations.forEach(function(mutation) {
             if (mutation.addedNodes.length > 0) {
                 var node = mutation.addedNodes[0];
-                var $node = $(mutation.addedNodes[0]);
                 var classes = node.classList;
                 if (node.classList) {
                     if (hasClass(node, SEARCH_RESULT_CARD) || hasClass(node, CARD_SHORT_ID)) {
@@ -215,21 +234,17 @@ window.addEventListener('load', function() {
                         showCardIds();
                         var card = node.querySelectorAll(CARD_LINK_QUERY_SELECTOR)[0];
                         var duplicateCheck = node.querySelectorAll(CARD_SHORT_ID_SELECTOR).length > 0;
-                        if (!duplicateCheck) {
-                            // Poll to wait for the url that has the card ID in it.
-                            poll(
-                                function() { return $node.attr("href"); },
-                                4000,
-                                100
-                            ).then(function(href) {
+                        if (card.getAttribute('href') == undefined && !duplicateCheck) {
+                            hrefReady(card).then(function(href) {
+                                var cardTitle = card.innerHTML;
                                 var shortId = document.createElement('span');
                                 shortId.innerHTML = '#' + getCardNumberFromUrl(href) + ' ';
-                                shortId.className = CARD_SHORT_ID + ' hide trello-card-numbers-inline trello-card-numbers-inline';
-                                $(card).prepend(shortId);
-                            }).catch(function(err) {
+                                shortId.className = 'card-short-id hide trello-card-numbers-inline trello-card-numbers-inline';
+                                card.insertBefore(shortId, card.firstChild);
+                            }, function(err) {
                                 console.error(err);
                             });
-                        }                        
+                        }
                     } else if (classes.contains('list')) {
                         showListNumbers();
                     }
