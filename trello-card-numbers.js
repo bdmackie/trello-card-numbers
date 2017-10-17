@@ -56,6 +56,11 @@ function modifyCardDialogWhenReady(cardNumber) {
     });
 }
 
+function getCardIdFromElement(element) {
+    var text = $(element).text();
+
+}
+
 function showListNumbers() {
     $('.' + LIST_NUM_CARDS_CLASS).addClassOnce(TCN_INLINE_BLOCK);
 
@@ -63,21 +68,26 @@ function showListNumbers() {
         $('.' + TCN_INLINE_BLOCK).removeClass("hide").css("display", "inline-block");
 
         if (items.showPercent) {
-            // Get total cards.
-            var total = $('.' + TCN_INLINE_BLOCK).get().reduce(function(sum, value) {
-                return sum + parseInt($(value).text(),10);
-            }, 0);
+            setTimeout(function() { 
+                // Get total cards.
+                var total = $('.' + TCN_INLINE_BLOCK).get().reduce(function(sum, value) {
+                    return sum + parseInt($(value).text(),10);
+                }, 0);
 
-            // Add percent label.
-            $('.' + TCN_INLINE_BLOCK).each(        
-                function(index, element) {
-                    var text = $(element).text();
-                    if (text.indexOf("(") >= 0)
-                        text = text.substr(0, text.indexOf("("));            
-                    text = text.trim() + " (" + (Math.round(parseInt(text,10)*100/total)) + "%)";
-                    $(element).text(text);
-                }
-            )
+                // Add percent label.
+                $('.' + TCN_INLINE_BLOCK).each(        
+                    function(index, element) {
+                        var text = $(element).text();
+                        if (text.indexOf("(") >= 0)
+                            text = text.substr(0, text.indexOf("("));
+                        var display = ((parseInt(text,10)*100/total).toFixed(1))/1;
+                        text = text.trim() + " (" + display + "%)";
+                        $(element).text(text);
+                    }
+                )
+                
+                $('.' + TCN_INLINE_BLOCK).removeClass("hide").css("display", "inline-block");                
+            }, 100);
         }
     });
 }
@@ -120,6 +130,7 @@ window.addEventListener('load', function() {
                         shortId.innerHTML = '#' + getCardNumberFromUrl(href) + ' ';
                         shortId.className = CARD_SHORT_ID + ' hide trello-card-numbers-inline trello-card-numbers-inline';
                         $card.prepend(shortId);
+                        setTimeout(showListNumbers,1000);
                     }).catch(function(err) {
                         console.error(err);
                     });
