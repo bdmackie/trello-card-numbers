@@ -10,20 +10,6 @@ var TCN_INLINE_BLOCK = 'trello-card-numbers-inline-block';
 var BOARD_URL_REGEX = /trello\.com\/b\//;
 var CARD_URL_REGEX = /trello\.com\/c\//;
 
-function getParentLink(elem) {
-    var node = elem;
-    while (node.tagName != 'BODY') {
-        if (node.tagName === 'A') {
-            return node.href;
-        }
-        if (node.parentNode !== 'undefined') {
-            node = node.parentNode;
-        } else {
-            return null;
-        }
-    }
-}
-
 function getCardNumberFromUrl(url) {
     var title = url.split('/');
     var s = title[title.length-1];
@@ -162,7 +148,7 @@ window.addEventListener('load', function() {
     // add card number to card details lightbox
     var id; // must set outside so each click overwrites the last id stored
     document.body.addEventListener('mouseup', function(e) {
-        var link = getParentLink(e.target);
+        var link = $(e.target).closest('A', $('BODY')).prop('href');
         if (urlMatch(BOARD_URL_REGEX, link) && link !== window.location.href) {
             setTimeout(function() { showListNumbers(); showCardIds(); }, 1000);
         }
