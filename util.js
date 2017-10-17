@@ -59,3 +59,9 @@ $.fn.findFirst = function(selector) {
         return null;
     return $cln.first();
 }
+
+function isRegexMatch(regex, test) {
+    if (test === undefined) { return false };
+    var matches = test.match(regex);
+    return matches != null && matches.length !== 0;
+}

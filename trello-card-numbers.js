@@ -56,12 +56,6 @@ function modifyCardDialogWhenReady(cardNumber) {
     });
 }
 
-function urlMatch(regex, url) {
-    if (url === undefined) { return false };
-    var matches = url.match(regex);
-    return matches != null && matches.length !== 0;
-}
-
 function showListNumbers() {
     $('.' + LIST_NUM_CARDS_CLASS).addClassOnce(TCN_INLINE_BLOCK);
 
@@ -91,9 +85,7 @@ function showListNumbers() {
     });
 }
 
-
 function showCardIds() {
-    //debugger;
     $('.' + CARD_SHORT_ID).addClassOnce(TCN_INLINE);
     chrome.storage.sync.get(function(items) {
         $('.' + CARD_SHORT_ID).removeClass("hide");
@@ -149,7 +141,7 @@ window.addEventListener('load', function() {
     var id; // must set outside so each click overwrites the last id stored
     document.body.addEventListener('mouseup', function(e) {
         var link = $(e.target).closest('A', $('BODY')).prop('href');
-        if (urlMatch(BOARD_URL_REGEX, link) && link !== window.location.href) {
+        if (isRegexMatch(BOARD_URL_REGEX, link) && link !== window.location.href) {
             setTimeout(function() { showListNumbers(); showCardIds(); }, 1000);
         }
 
@@ -164,9 +156,8 @@ window.addEventListener('load', function() {
         }
     }, true);
 
-
     var pageUrl = document.location.href;
-    if (urlMatch(CARD_URL_REGEX, pageUrl)) {
+    if (isRegexMatch(CARD_URL_REGEX, pageUrl)) {
         var num = '#' + getCardNumberFromUrl(pageUrl);
         modifyCardDialogWhenReady(num);
     }
