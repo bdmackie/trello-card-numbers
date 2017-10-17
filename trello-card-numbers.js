@@ -62,26 +62,23 @@ function showListNumbers() {
     chrome.storage.sync.get(function(items) {
         $('.' + TCN_INLINE_BLOCK).removeClass("hide").css("display", "inline-block");
 
-        // if (items.showPercent) {
-        //     // Get total cards.
-        //     var total = 0;
-        //     $('.' + TCN_INLINE_BLOCK).each(
-        //         function(index, element) { 
-        //             total += parseInt($(element).text(),10)
-        //         }
-        //     );
-            
-        //     // Add percent label.
-        //     $('.' + TCN_INLINE_BLOCK).each(        
-        //         function(index, element) {
-        //             var text = $(element).text();
-        //             if (text.indexOf("(") >= 0)
-        //                 text = text.substr(0, text.indexOf("("));            
-        //             text = text.trim() + " (" + (Math.round(parseInt(text,10)*100/total)) + "%)";
-        //             $(element).text(text);
-        //         }
-        //     )
-        // }
+        if (items.showPercent) {
+            // Get total cards.
+            var total = $('.' + TCN_INLINE_BLOCK).get().reduce(function(sum, value) {
+                return sum + parseInt($(value).text(),10);
+            }, 0);
+
+            // Add percent label.
+            $('.' + TCN_INLINE_BLOCK).each(        
+                function(index, element) {
+                    var text = $(element).text();
+                    if (text.indexOf("(") >= 0)
+                        text = text.substr(0, text.indexOf("("));            
+                    text = text.trim() + " (" + (Math.round(parseInt(text,10)*100/total)) + "%)";
+                    $(element).text(text);
+                }
+            )
+        }
     });
 }
 
