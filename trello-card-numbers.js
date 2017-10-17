@@ -3,26 +3,12 @@ var CARD_LINK_QUERY_SELECTOR = 'span.list-card-title.js-card-name';
 var LIST_NUM_CARDS_CLASS = 'list-header-num-cards';
 var CARD_SHORT_ID = 'card-short-id';
 var CARD_SHORT_ID_SELECTOR = '.' + CARD_SHORT_ID
-var SEARCH_RESULT_CARD = 'search-result-card';
+var SEARCH_RESULT_CARD_CLASS = 'search-result-card';
 var TCN_HEADER = 'trello-card-numbers-detail-header';
 var TCN_INLINE = 'trello-card-numbers-inline';
 var TCN_INLINE_BLOCK = 'trello-card-numbers-inline-block';
 var BOARD_URL_REGEX = /trello\.com\/b\//;
 var CARD_URL_REGEX = /trello\.com\/c\//;
-
-function closestWithClass(elem, className, stopAtName) {
-    var result = null;
-    $(elem).parent().each(function(index, item) {
-        if (stopAtName && item.name == stopAtName)
-            return false;
-        if ($(item).hasClass(className)) {
-            result = item;
-            return false;
-        }
-        return true;        
-    });
-    return result;
-}
 
 function hasClass(target, className) {
     className = ' ' + className + ' ';
@@ -155,11 +141,11 @@ window.addEventListener('load', function() {
                 var $node = $(mutation.addedNodes[0]);
                 var classes = node.classList;
                 if (node.classList) {
-                    if (hasClass(node, SEARCH_RESULT_CARD) || hasClass(node, CARD_SHORT_ID)) {
+                    if (hasClass(node, SEARCH_RESULT_CARD_CLASS) || hasClass(node, CARD_SHORT_ID)) {
                         showCardIds();
                     } else if (hasClass(node, 'list-card') && hasClass(node, 'js-member-droppable')) {
                         showCardIds();
-                        var card = node.querySelectorAll(CARD_LINK_QUERY_SELECTOR)[0];
+                        var $card = $node.find(CARD_LINK_QUERY_SELECTOR)[0];
                         var duplicateCheck = node.querySelectorAll(CARD_SHORT_ID_SELECTOR).length > 0;
                         if (!duplicateCheck) {
                             // Poll to wait for the url that has the card ID in it.
@@ -171,7 +157,7 @@ window.addEventListener('load', function() {
                                 var shortId = document.createElement('span');
                                 shortId.innerHTML = '#' + getCardNumberFromUrl(href) + ' ';
                                 shortId.className = CARD_SHORT_ID + ' hide trello-card-numbers-inline trello-card-numbers-inline';
-                                $(card).prepend(shortId);
+                                $card.prepend(shortId);
                             }).catch(function(err) {
                                 console.error(err);
                             });
@@ -194,12 +180,12 @@ window.addEventListener('load', function() {
             setTimeout(function() { showListNumbers(); showCardIds(); }, 1000);
         }
 
-        var listCard =  closestWithClass(e.target, 'list-card-details', 'BODY') || 
-            closestWithClass(e.target, SEARCH_RESULT_CARD, 'BODY');
-        if (listCard) {
-            var cardId = listCard.querySelectorAll(CARD_SHORT_ID_SELECTOR)[0];
-            if (cardId) {
-                id = cardId.innerHTML;
+        var $listCard =  $(e.target).closest('.list-card-details', $('BODY')) || 
+            $(e.target).closest('.'+SEARCH_RESULT_CARD_CLASS, $('BODY'));
+        if ($listCard) {
+            var $cardId = $listCard.findFirst(CARD_SHORT_ID_SELECTOR);
+            if ($cardId) {
+                id = $cardId.text();
                 modifyCardDialogWhenReady(id);
             }
         }

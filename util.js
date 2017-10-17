@@ -52,3 +52,21 @@ $.fn.addClassOnce = function(className) {
             $(item).addClass(className);
     })
 };
+
+$.fn.findAncestor = function(selector, stopSelector) {
+    if (stopSelector && this.is(stopSelector))
+        return null;
+    if (this.is(selector))
+        return this;
+    var $parent = this.parent();
+    if (!$parent)
+        return null;
+    return $parent.findAncestor(selector, stopSelector);
+}
+
+$.fn.findFirst = function(selector) {
+    var $cln = this.find(selector);
+    if ($cln.size() == 0)
+        return null;
+    return $cln.first();
+}
